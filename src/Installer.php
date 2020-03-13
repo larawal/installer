@@ -20,7 +20,7 @@ class Installer extends Command
      *
      * @var \Illuminate\Contracts\Foundation\Application
      */
-    protected $name = 'larawal';
+    protected $laravel = 'larawal';
 
     /**
      * Configure the command options.
