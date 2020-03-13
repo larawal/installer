@@ -21,7 +21,7 @@ class Installer extends Command
      * @var \Illuminate\Contracts\Foundation\Application
      */
     protected $laravel = 'larawal';
-    
+
     /**
      * Configure the command options.
      *
@@ -126,7 +126,7 @@ class Installer extends Command
      */
     protected function makeFilename()
     {
-        return getcwd().'/laravel_'.md5(time().uniqid()).'.zip';
+        return getcwd().'/larawal_'.md5(time().uniqid()).'.zip';
     }
 
     /**
