@@ -21,7 +21,7 @@ class Installer extends Command
      * @var \Illuminate\Contracts\Foundation\Application
      */
     protected $laravel = 'larawal';
-
+    
     /**
      * Configure the command options.
      *
