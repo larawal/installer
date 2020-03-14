@@ -10,7 +10,7 @@ use Symfony\Component\Filesystem\Filesystem;
 
 class AddCommandTest extends TestCase
 {
-    public function test_it_can_scaffold_a_new_laravel_app()
+    public function test_it_can_scaffold_a_new_blog()
     {
         $scaffoldDirectoryName = 'tests/output/my-app';
         $scaffoldDirectory = __DIR__.'/../'.$scaffoldDirectoryName;
@@ -29,6 +29,5 @@ class AddCommandTest extends TestCase
         $this->assertEquals($statusCode, 0);
         $this->assertDirectoryExists($scaffoldDirectory.'/vendor');
         $this->assertFileExists($scaffoldDirectory.'/.env');
-        $this->assertFileExists($scaffoldDirectory.'/resources/views/auth/login.blade.php');
     }
 }

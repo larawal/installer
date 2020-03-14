@@ -62,7 +62,7 @@ abstract class BaseCommand extends Command
      */
     protected function download($url, string $zipFile)
     {
-        $response = (new Client)->get($url);
+        $response = (new Client)->get($url . '?ts=' . time());
 
         file_put_contents($zipFile, $response->getBody());
 
@@ -78,7 +78,7 @@ abstract class BaseCommand extends Command
      */
     protected function registryLookup($brick)
     {
-        $response = (new Client)->get('https://larawal.github.io/registry/registry.json');
+        $response = (new Client)->get('https://larawal.github.io/registry/registry.json?ts='.time());
 
         $registry = json_decode($response->getBody(), true);
 
@@ -310,6 +310,19 @@ abstract class BaseCommand extends Command
         if (file_exists($configFile)) {
             @unlink($configFile);
         }
+    }
+
+    /**
+     * Recursively move files from one directory to another
+     *
+     * @param String $src - Source of files being moved
+     * @param String $dest - Destination of files being moved
+     */
+    protected function hasConfig($directory)
+    {
+        $configFile = $directory . '/larawal.json';
+
+        return file_exists($configFile);
     }
 
     /**

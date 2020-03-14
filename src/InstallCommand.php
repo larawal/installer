@@ -25,7 +25,8 @@ class InstallCommand extends BaseCommand
     {
         $this
             ->setName('install')
-            ->setDescription('Install all dependencies');
+            ->setDescription('Install all dependencies')
+            ->addOption('path', null, InputOption::VALUE_REQUIRED, 'Install on specific path', getcwd());
     }
 
     /**
@@ -42,7 +43,7 @@ class InstallCommand extends BaseCommand
 
         $output->writeln('<info>Configuration lookup...</info>');
 
-        $directory = getcwd();
+        $directory = $input->getOption('path');
         $config = $this->configLookup($directory);
 
         if (isset($config['from'])) {

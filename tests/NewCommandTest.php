@@ -10,16 +10,16 @@ use Symfony\Component\Filesystem\Filesystem;
 
 class NewCommandTest extends TestCase
 {
-    public function test_it_can_scaffold_a_new_laravel_app()
+    public function test_it_can_scaffold_a_new_blog()
     {
-        $scaffoldDirectoryName = 'tests/output/my-app';
-        $scaffoldDirectory = __DIR__.'/../../'.$scaffoldDirectoryName;
+        $scaffoldDirectoryName = 'tests/output/my-blog';
+        $scaffoldDirectory = __DIR__.'/../'.$scaffoldDirectoryName;
 
         if (file_exists($scaffoldDirectory)) {
             (new Filesystem)->remove($scaffoldDirectory);
         }
 
-        $app = new Application('Larawal Installer');
+        $app = new Application('Larawal');
         $app->add(new NewCommand);
 
         $tester = new CommandTester($app->find('new'));
@@ -29,6 +29,5 @@ class NewCommandTest extends TestCase
         $this->assertEquals($statusCode, 0);
         $this->assertDirectoryExists($scaffoldDirectory.'/vendor');
         $this->assertFileExists($scaffoldDirectory.'/.env');
-        $this->assertFileExists($scaffoldDirectory.'/resources/views/auth/login.blade.php');
     }
 }

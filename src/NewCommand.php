@@ -59,19 +59,18 @@ class NewCommand extends BaseCommand
 
         $this->fetchBrick($brickUrl, $directory, $output);
 
-        $config = $this->configLookup($directory);
-
-        $commands = ['install --no-scripts'];
-
-        $commands = $this->appendPostInstall($commands, $config);
-
-        $process = $this->runCommands($commands, $directory, $input, $output);
-
-        $this->deleteConfig($directory);
-
-        if ($process->isSuccessful()) {
-            $output->writeln('<comment>Application ready! Build something amazing.</comment>');
+        if ($this->hasConfig($directory)) {
+            $config = $this->configLookup($directory);
+            $commands = ['install --no-scripts'];
+            $commands = $this->appendPostInstall($commands, $config);
+            $process = $this->runCommands($commands, $directory, $input, $output);
+            $this->deleteConfig($directory);
+            if ($process->isSuccessful()) {
+                $output->writeln('<comment>Configuration applied.</comment>');
+            }
         }
+
+        $output->writeln('<comment>Application ready! Build something amazing.</comment>');
 
         return 0;
     }
