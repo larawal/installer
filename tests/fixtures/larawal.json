@@ -1,0 +1,19 @@
+{
+    "from": "laravel:7.0.0",
+
+    "scripts": {
+        "post-install": [
+            "post-root-package-install",
+            "post-create-project-cmd",
+            "post-autoload-dump"
+        ]
+    },
+
+    "require": {
+        "spatie/laravel-permission": "*"
+    },
+
+    "require-dev": {
+        "barryvdh/laravel-debugbar": "*"
+    }
+}

@@ -25,7 +25,7 @@ class FetchCommand extends BaseCommand
     {
         $this
             ->setName('fetch')
-            ->setDescription('Fetch files from Larawal registry')
+            ->setDescription('Fetch brick from Larawal registry')
             ->addArgument('brick', InputArgument::REQUIRED);
     }
 
@@ -53,52 +53,10 @@ class FetchCommand extends BaseCommand
         $output->writeln('<info>Registry lookup...</info>');
 
         $brickUrl = $this->registryLookup($brick);
-        $brickFile = $this->tempFile();
 
-        $this->download($brickUrl, $brickFile)
-             ->extract($brickFile, $directory)
-             ->prepareWritableDirectories($directory, $output)
-             ->cleanUp($brickFile);
+        $this->fetchBrick($brickUrl, $directory, $output);
 
-        /*
-        $composer = $this->findComposer();
-
-        $commands = [
-            $composer.' install --no-scripts',
-            $composer.' run-script post-root-package-install',
-            $composer.' run-script post-create-project-cmd',
-            $composer.' run-script post-autoload-dump',
-        ];
-
-        if ($input->getOption('no-ansi')) {
-            $commands = array_map(function ($value) {
-                return $value.' --no-ansi';
-            }, $commands);
-        }
-
-        if ($input->getOption('quiet')) {
-            $commands = array_map(function ($value) {
-                return $value.' --quiet';
-            }, $commands);
-        }
-
-        $process = Process::fromShellCommandline(implode(' && ', $commands), $directory, null, null, null);
-
-        if ('\\' !== DIRECTORY_SEPARATOR && file_exists('/dev/tty') && is_readable('/dev/tty')) {
-            try {
-                $process->setTty(true);
-            } catch (RuntimeException $e) {
-                $output->writeln('Warning: '.$e->getMessage());
-            }
-        }
-
-        $process->run(function ($type, $line) use ($output) {
-            $output->write($line);
-        });
-        */
-        //if ($process->isSuccessful()) {
-            $output->writeln('<comment>Brick ready! Build something amazing.</comment>');
-        //}
+        $output->writeln('<comment>Brick ready! Build something amazing.</comment>');
 
         return 0;
     }

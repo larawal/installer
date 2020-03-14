@@ -14,7 +14,7 @@ use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Process\Process;
 use ZipArchive;
 
-class NewCommand extends BaseCommand
+class InstallCommand extends BaseCommand
 {
     /**
      * Configure the command options.
@@ -24,14 +24,13 @@ class NewCommand extends BaseCommand
     protected function configure()
     {
         $this
-            ->setName('new')
-            ->setDescription('Build a new Larawal application')
-            ->addArgument('name', InputArgument::OPTIONAL)
-            ->addOption('from', null, InputOption::VALUE_REQUIRED, 'Prepare a new assestement', 'laravel');
+            ->setName('install')
+            ->setDescription('Install all dependencies');
     }
 
     /**
      * Execute the command.
+     *
      *
      * @param  \Symfony\Component\Console\Input\InputInterface  $input
      * @param  \Symfony\Component\Console\Output\OutputInterface  $output
@@ -41,36 +40,28 @@ class NewCommand extends BaseCommand
     {
         $this->checkExtensions();
 
-        $name = $input->getArgument('name');
+        $output->writeln('<info>Configuration lookup...</info>');
 
-        $directory = $name && $name !== '.' ? getcwd().'/'.$name : getcwd();
-
-        /*
-        if (! $input->getOption('force')) {
-            $this->verifyApplicationDoesntExist($directory);
-        }
-        */
-
-        $output->writeln('<info>Crafting application...</info>');
-
-        $fromBrick = $input->getOption('from');
-
-        $brickUrl = $this->registryLookup($fromBrick);
-
-        $this->fetchBrick($brickUrl, $directory, $output);
-
+        $directory = getcwd();
         $config = $this->configLookup($directory);
 
+        if (isset($config['from'])) {
+            $brickUrl = $this->registryLookup($config['from']);
+            $this->fetchBrick($brickUrl, $directory, $output);
+        }
+
         $commands = ['install --no-scripts'];
+
+        $commands = $this->appendRequire($commands, $config);
+
+        $commands = $this->appendRequireDev($commands, $config);
 
         $commands = $this->appendPostInstall($commands, $config);
 
         $process = $this->runCommands($commands, $directory, $input, $output);
 
-        $this->deleteConfig($directory);
-
         if ($process->isSuccessful()) {
-            $output->writeln('<comment>Application ready! Build something amazing.</comment>');
+            $output->writeln('<comment>Brick ready! Build something amazing.</comment>');
         }
 
         return 0;

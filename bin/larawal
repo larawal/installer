@@ -11,5 +11,6 @@ $app = new Symfony\Component\Console\Application('Larawal', '1.0.0');
 
 $app->add(new Larawal\Installer\Console\NewCommand);
 $app->add(new Larawal\Installer\Console\FetchCommand);
+$app->add(new Larawal\Installer\Console\InstallCommand);
 
 $app->run();

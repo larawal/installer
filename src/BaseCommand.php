@@ -86,6 +86,10 @@ abstract class BaseCommand extends Command
             throw new RuntimeException('Registry is broken!');
         }
 
+        if (isset($registry['shortcuts'][$brick])) {
+            $brick = $registry['shortcuts'][$brick];
+        }
+
         if (empty($registry['bricks'][$brick])) {
             throw new RuntimeException("Brick not found: {$brick}");
         }
@@ -201,6 +205,19 @@ abstract class BaseCommand extends Command
         if (is_dir($tempFile)) { return $tempFile; }
     }
 
+    /**
+     *
+     * @param $brickUrl
+     * @param $directory
+     */
+    protected function fetchBrick($brickUrl, $directory, $output)
+    {
+        $brickFile = $this->tempFile();
+        $this->download($brickUrl, $brickFile)
+            ->extract($brickFile, $directory)
+            ->prepareWritableDirectories($directory, $output)
+            ->cleanUp($brickFile);
+    }
 
     /**
      * Get the composer command for the environment.
@@ -248,5 +265,161 @@ abstract class BaseCommand extends Command
             }
         }
         @unlink($src);
+    }
+
+    /**
+     * Recursively move files from one directory to another
+     *
+     * @param String $src - Source of files being moved
+     * @param String $dest - Destination of files being moved
+     */
+    protected function copyFiles($files, $src, $dest)
+    {
+        // If source is not a directory stop processing
+        if (!is_dir($src)) return false;
+
+        // If the destination directory does not exist create it
+        if (!is_dir($dest)) {
+            if(!mkdir($dest)) {
+                // If the destination directory could not be created stop processing
+                return false;
+            }
+        }
+
+        foreach ($files as $file) {
+            copy($src.'/'.$file, $dest.'/'.$file);
+        }
+    }
+
+    /**
+     * Recursively move files from one directory to another
+     *
+     * @param String $src - Source of files being moved
+     * @param String $dest - Destination of files being moved
+     */
+    protected function deleteConfig($directory)
+    {
+        $configFile = $directory . '/larawal.json';
+
+        if (file_exists($configFile)) {
+            @unlink($configFile);
+        }
+    }
+
+    /**
+     * Recursively move files from one directory to another
+     *
+     * @param String $src - Source of files being moved
+     * @param String $dest - Destination of files being moved
+     */
+    protected function configLookup($directory)
+    {
+        $configFile = $directory . '/larawal.json';
+
+        if (!file_exists($configFile)) {
+            throw new RuntimeException('Configuration file not found: larawal.json');
+        }
+
+        $config = json_decode(file_get_contents($configFile), true);
+
+        if (!is_array($config) || !$config) {
+            throw new RuntimeException('Configuration file syntax error: larawal.json');
+        }
+
+        return $config;
+    }
+
+    /**
+     *
+     */
+    protected function runCommands($commands, $directory, $input, $output)
+    {
+        $composer = $this->findComposer();
+
+        $commands = array_map(function ($value) use ($composer) {
+            return $composer . ' ' . $value;
+        }, $commands);
+
+        if ($input->getOption('no-ansi')) {
+            $commands = array_map(function ($value) {
+                return $value.' --no-ansi';
+            }, $commands);
+        }
+
+        if ($input->getOption('quiet')) {
+            $commands = array_map(function ($value) {
+                return $value.' --quiet';
+            }, $commands);
+        }
+
+        $process = Process::fromShellCommandline(implode(' && ', $commands), $directory, null, null, null);
+
+        if ('\\' !== DIRECTORY_SEPARATOR && file_exists('/dev/tty') && is_readable('/dev/tty')) {
+            try {
+                $process->setTty(true);
+            } catch (RuntimeException $e) {
+                $output->writeln('Warning: '.$e->getMessage());
+            }
+        }
+
+        $process->run(function ($type, $line) use ($output) {
+            $output->write($line);
+        });
+
+        return $process;
+    }
+
+    /**
+     *
+     */
+    protected function appendPostInstall($commands, $config)
+    {
+        if (isset($config['scripts']['post-install']) && is_array($config['scripts']['post-install'])) {
+            foreach ($config['scripts']['post-install'] as $script) {
+                $commands[] = 'run-script '.$script;
+            }
+        }
+        return $commands;
+    }
+
+    /**
+     *
+     */
+    protected function appendPostAdd($commands, $config)
+    {
+        if (isset($config['scripts']['post-add']) && is_array($config['scripts']['post-add'])) {
+            foreach ($config['scripts']['post-add'] as $script) {
+                $commands[] = 'run-script '.$script;
+            }
+        }
+        return $commands;
+    }
+
+    /**
+     *
+     */
+    protected function appendRequire($commands, $config)
+    {
+        if (isset($config['require']) && is_array($config['require'])) {
+            foreach ($config['require'] as $library => $version) {
+                $commands[] = 'require ' . $library . ':' . $version;
+            }
+        }
+
+        return $commands;
+    }
+
+    /**
+     *
+     */
+    protected function appendRequireDev($commands, $config)
+    {
+        if (isset($config['require-dev']) && is_array($config['require-dev'])) {
+            foreach ($config['require-dev'] as $library => $version) {
+                $commands[] = 'require '.$library.':'.$version.' --dev';
+            }
+        }
+
+        return $commands;
     }
 }
