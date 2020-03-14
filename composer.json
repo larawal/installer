@@ -1,6 +1,7 @@
 {
     "name": "larawal/installer",
     "description": "Create your Larawal project based on Laravel.",
+    "version": "1.0.0",
     "license": "MIT",
     "authors": [
         {
@@ -32,7 +33,12 @@
     ],
     "autoload": {
         "psr-4": {
-            "Laravel\\Installer\\Console\\": "src/"
+            "Larawal\\Installer\\Console\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Larawal\\Installer\\Console\\Tests\\": "tests/"
         }
     },
     "extra": {

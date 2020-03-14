@@ -7,7 +7,9 @@ if (file_exists(__DIR__.'/../../../autoload.php')) {
     require __DIR__.'/../vendor/autoload.php';
 }
 
-$app = new Symfony\Component\Console\Application('Larawal Installer', '3.0.1');
-$app->add(new Laravel\Installer\Console\Installer);
+$app = new Symfony\Component\Console\Application('Larawal', '1.0.0');
+
+$app->add(new Larawal\Installer\Console\NewCommand);
+$app->add(new Larawal\Installer\Console\FetchCommand);
 
 $app->run();

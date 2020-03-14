@@ -1,6 +1,7 @@
 <?php
 
-namespace Laravel\Installer\Console;
+namespace Larawal\Installer\Console;
+
 use GuzzleHttp\Client;
 use RuntimeException;
 use Symfony\Component\Console\Command\Command;
@@ -11,99 +12,22 @@ use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Filesystem\Exception\IOExceptionInterface;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Process\Process;
+use DirectoryIterator;
 use ZipArchive;
 
-class Installer extends Command
+abstract class BaseCommand extends Command
 {
     /**
-     * Rename the Laravel application instance.
+     * Verify that the application does not already exist.
      *
-     * @var \Illuminate\Contracts\Foundation\Application
-     */
-    protected $laravel = 'larawal';
-
-    /**
-     * Configure the command options.
-     *
+     * @param  string  $directory
      * @return void
      */
-    protected function configure()
+    protected function checkExtensions()
     {
-        $this
-            ->setName('new')
-            ->setDescription('Build a new Larawal application')
-            ->addArgument('name', InputArgument::OPTIONAL)
-            ->addOption('from', null, InputOption::VALUE_NONE, 'Prepare a new assestement');
-    }
-
-    /**
-     * Execute the command.
-     *
-     * @param  \Symfony\Component\Console\Input\InputInterface  $input
-     * @param  \Symfony\Component\Console\Output\OutputInterface  $output
-     * @return int
-     */
-    protected function execute(InputInterface $input, OutputInterface $output)
-    {
-        if (! extension_loaded('zip')) {
+        if (!extension_loaded('zip')) {
             throw new RuntimeException('The Zip PHP extension is not installed. Please install it and try again.');
         }
-
-        $name = $input->getArgument('name');
-
-        $directory = $name && $name !== '.' ? getcwd().'/'.$name : getcwd();
-
-        if (! $input->getOption('force')) {
-            $this->verifyApplicationDoesntExist($directory);
-        }
-
-        $output->writeln('<info>Crafting application...</info>');
-
-        $this->download($zipFile = $this->makeFilename(), $this->getVersion($input))
-             ->extract($zipFile, $directory)
-             ->prepareWritableDirectories($directory, $output)
-             ->cleanUp($zipFile);
-
-        $composer = $this->findComposer();
-
-        $commands = [
-            $composer.' install --no-scripts',
-            $composer.' run-script post-root-package-install',
-            $composer.' run-script post-create-project-cmd',
-            $composer.' run-script post-autoload-dump',
-        ];
-
-        if ($input->getOption('no-ansi')) {
-            $commands = array_map(function ($value) {
-                return $value.' --no-ansi';
-            }, $commands);
-        }
-
-        if ($input->getOption('quiet')) {
-            $commands = array_map(function ($value) {
-                return $value.' --quiet';
-            }, $commands);
-        }
-
-        $process = Process::fromShellCommandline(implode(' && ', $commands), $directory, null, null, null);
-
-        if ('\\' !== DIRECTORY_SEPARATOR && file_exists('/dev/tty') && is_readable('/dev/tty')) {
-            try {
-                $process->setTty(true);
-            } catch (RuntimeException $e) {
-                $output->writeln('Warning: '.$e->getMessage());
-            }
-        }
-
-        $process->run(function ($type, $line) use ($output) {
-            $output->write($line);
-        });
-
-        if ($process->isSuccessful()) {
-            $output->writeln('<comment>Application ready! Build something amazing.</comment>');
-        }
-
-        return 0;
     }
 
     /**
@@ -136,19 +60,37 @@ class Installer extends Command
      * @param  string  $version
      * @return $this
      */
-    protected function download($zipFile, string $version)
+    protected function download($url, string $zipFile)
     {
-        switch ($version) {
-            case 'blog':
-                $filename = 'larawal-blog.zip';
-                break;
-        }
-
-        $response = (new Client)->get('https://belicedigital.com/'.$filename);
+        $response = (new Client)->get($url);
 
         file_put_contents($zipFile, $response->getBody());
 
         return $this;
+    }
+
+    /**
+     * Download the temporary Zip to the given file.
+     *
+     * @param  string  $zipFile
+     * @param  string  $version
+     * @return $this
+     */
+    protected function registryLookup($brick)
+    {
+        $response = (new Client)->get('https://larawal.github.io/registry/registry.json');
+
+        $registry = json_decode($response->getBody(), true);
+
+        if (empty($registry['version'])) {
+            throw new RuntimeException('Registry is broken!');
+        }
+
+        if (empty($registry['bricks'][$brick])) {
+            throw new RuntimeException("Brick not found: {$brick}");
+        }
+
+        return $registry['bricks'][$brick];
     }
 
     /**
@@ -168,7 +110,11 @@ class Installer extends Command
             throw new RuntimeException('The zip file could not download. Verify that you are able to access: http://cabinet.laravel.com/latest.zip');
         }
 
-        $archive->extractTo($directory);
+        $tempDir = $this->tempDir();
+
+        $archive->extractTo($tempDir);
+
+        $this->moveFiles($tempDir . DIRECTORY_SEPARATOR . $archive->getNameIndex(0), $directory);
 
         $archive->close();
 
@@ -242,4 +188,65 @@ class Installer extends Command
         return 'composer';
     }
 
+    /**
+     * Get the composer command for the environment.
+     *
+     * @return string
+     */
+    protected function tempDir()
+    {
+        $tempFile=tempnam(sys_get_temp_dir(), '');
+        if (file_exists($tempFile)) { unlink($tempFile); }
+        mkdir($tempFile);
+        if (is_dir($tempFile)) { return $tempFile; }
+    }
+
+
+    /**
+     * Get the composer command for the environment.
+     *
+     * @return string
+     */
+    protected function tempFile()
+    {
+        $tempFile=tempnam(sys_get_temp_dir(), '');
+        if (file_exists($tempFile)) { unlink($tempFile); }
+        if (is_dir($tempFile)) {
+            return;
+        }
+        return $tempFile;
+    }
+
+    /**
+     * Recursively move files from one directory to another
+     *
+     * @param String $src - Source of files being moved
+     * @param String $dest - Destination of files being moved
+     */
+    protected function moveFiles($src, $dest)
+    {
+
+        // If source is not a directory stop processing
+        if(!is_dir($src)) return false;
+
+        // If the destination directory does not exist create it
+        if(!is_dir($dest)) {
+            if(!mkdir($dest)) {
+                // If the destination directory could not be created stop processing
+                return false;
+            }
+        }
+
+        // Open the source directory to read in files
+        $i = new DirectoryIterator($src);
+        foreach($i as $f) {
+            if($f->isFile()) {
+                rename($f->getRealPath(), "$dest/" . $f->getFilename());
+            } else if(!$f->isDot() && $f->isDir()) {
+                $this->moveFiles($f->getRealPath(), "$dest/$f");
+                @unlink($f->getRealPath());
+            }
+        }
+        @unlink($src);
+    }
 }
