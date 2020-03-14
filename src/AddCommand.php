@@ -14,7 +14,7 @@ use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Process\Process;
 use ZipArchive;
 
-class FetchCommand extends BaseCommand
+class AddCommand extends BaseCommand
 {
     /**
      * Configure the command options.
@@ -53,6 +53,9 @@ class FetchCommand extends BaseCommand
         $output->writeln('<info>Registry lookup...</info>');
 
         $brickUrl = $this->registryLookup($brick);
+
+        var_dump($brickUrl);
+        die();
 
         $brickFile = $this->tempFile();
         $tempDir = $this->tempDir();

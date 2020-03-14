@@ -94,7 +94,13 @@ abstract class BaseCommand extends Command
             throw new RuntimeException("Brick not found: {$brick}");
         }
 
-        return $registry['bricks'][$brick];
+        $url = $registry['bricks'][$brick];
+
+        if (filter_var($url, FILTER_VALIDATE_URL) === false) {
+            throw new RuntimeException("Brick '{$brick}' invalid url on registry: {$url}");
+        }
+
+        return $url;
     }
 
     /**
