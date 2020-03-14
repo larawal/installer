@@ -8,12 +8,12 @@ use Symfony\Component\Console\Application;
 use Symfony\Component\Console\Tester\CommandTester;
 use Symfony\Component\Filesystem\Filesystem;
 
-class NewCommandTest extends TestCase
+class FetchCommandTest extends TestCase
 {
     public function test_it_can_scaffold_a_new_laravel_app()
     {
         $scaffoldDirectoryName = 'tests/output/my-app';
-        $scaffoldDirectory = __DIR__.'/../../'.$scaffoldDirectoryName;
+        $scaffoldDirectory = __DIR__.'/../'.$scaffoldDirectoryName;
 
         if (file_exists($scaffoldDirectory)) {
             (new Filesystem)->remove($scaffoldDirectory);
