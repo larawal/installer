@@ -26,7 +26,8 @@ class AddCommand extends BaseCommand
         $this
             ->setName('add')
             ->setDescription('Add brick from Larawal registry')
-            ->addArgument('brick', InputArgument::REQUIRED);
+            ->addArgument('brick', InputArgument::REQUIRED)
+            ->addOption('path', null, InputOption::VALUE_REQUIRED, 'Install on specific path', getcwd());
     }
 
     /**
@@ -42,7 +43,7 @@ class AddCommand extends BaseCommand
         $this->checkExtensions();
 
         $brick = $input->getArgument('brick');
-        $directory = getcwd();
+        $directory = $input->getOption('path');
 
         /*
         if (! $input->getOption('force')) {
@@ -53,10 +54,6 @@ class AddCommand extends BaseCommand
         $output->writeln('<info>Registry lookup...</info>');
 
         $brickUrl = $this->registryLookup($brick);
-
-        var_dump($brickUrl);
-        die();
-
         $brickFile = $this->tempFile();
         $tempDir = $this->tempDir();
 
@@ -82,6 +79,8 @@ class AddCommand extends BaseCommand
         if ($process->isSuccessful()) {
             $output->writeln('<comment>Brick successful added.</comment>');
         }
+
+        $output->writeln('<comment>Brick successful added.</comment>');
 
         return 0;
     }

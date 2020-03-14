@@ -26,7 +26,8 @@ class FetchCommand extends BaseCommand
         $this
             ->setName('fetch')
             ->setDescription('Fetch brick from Larawal registry')
-            ->addArgument('brick', InputArgument::REQUIRED);
+            ->addArgument('brick', InputArgument::REQUIRED)
+            ->addOption('path', null, InputOption::VALUE_REQUIRED, 'Install on specific path', getcwd());
     }
 
     /**
@@ -42,7 +43,7 @@ class FetchCommand extends BaseCommand
         $this->checkExtensions();
 
         $brick = $input->getArgument('brick');
-        $directory = getcwd();
+        $directory = $input->getOption('path');
 
         /*
         if (! $input->getOption('force')) {

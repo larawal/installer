@@ -15,7 +15,7 @@
     <testsuites>
         <testsuite name="Laravel Installer Test Suite">
             <directory suffix="Test.php">./tests</directory>
-            <exclude>./tests/scaffolds</exclude>
+            <exclude>./tests/output</exclude>
         </testsuite>
     </testsuites>
     <filter>
